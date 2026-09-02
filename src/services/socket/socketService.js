@@ -1,0 +1,98 @@
+import { io } from 'socket.io-client';
+import { Platform } from 'react-native';
+import { tokenStorage } from '../storage/tokenStorage';
+
+const getSocketUrl = () => {
+  if (process.env.EXPO_PUBLIC_API_URL) {
+    return process.env.EXPO_PUBLIC_API_URL.replace('/api', '');
+  }
+  if (Platform.OS === 'android') {
+    return 'http://10.0.2.2:3000';
+  }
+  return 'http://localhost:3000';
+};
+
+class SocketService {
+  constructor() {
+    this.socket = null;
+    this.url = getSocketUrl();
+    this.isConnected = false;
+  }
+
+  connect() {
+    if (this.socket && this.socket.connected) {
+      return this.socket;
+    }
+
+    console.log(`📡 [Socket.IO] Khởi tạo kết nối tới Gateway: ${this.url}`);
+
+    this.socket = io(this.url, {
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 2000,
+    });
+
+    this.socket.on('connect', async () => {
+      this.isConnected = true;
+      console.log(`✅ [Socket.IO] Đã kết nối thành công! Socket ID: ${this.socket.id}`);
+
+      // Tự động gửi join_room khi kết nối
+      const user = await tokenStorage.getUser();
+      if (user) {
+        const role = String(user.role || 'CUSTOMER').toUpperCase();
+        const profileId = user.workerProfile?.id || user.customerProfile?.id || user.id;
+        this.joinRoom(role, profileId, user.id);
+      }
+    });
+
+    this.socket.on('disconnect', (reason) => {
+      this.isConnected = false;
+      console.log(`🔴 [Socket.IO] Đã ngắt kết nối: ${reason}`);
+    });
+
+    this.socket.on('connect_error', (error) => {
+      console.warn(`⚠️ [Socket.IO Error]: ${error.message}`);
+    });
+
+    return this.socket;
+  }
+
+  joinRoom(role, profileId, userId) {
+    if (this.socket && this.socket.connected) {
+      console.log(`🚪 [Socket.IO] Yêu cầu tham gia Room: role=${role}, profileId=${profileId}`);
+      this.socket.emit('join_room', { role, profileId, userId });
+    }
+  }
+
+  on(eventName, callback) {
+    if (!this.socket) {
+      this.connect();
+    }
+    this.socket.on(eventName, callback);
+  }
+
+  off(eventName, callback) {
+    if (this.socket) {
+      this.socket.off(eventName, callback);
+    }
+  }
+
+  emit(eventName, data) {
+    if (this.socket && this.socket.connected) {
+      this.socket.emit(eventName, data);
+    } else {
+      console.warn(`⚠️ [Socket.IO] Chưa kết nối, không thể emit '${eventName}'`);
+    }
+  }
+
+  disconnect() {
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+      this.isConnected = false;
+    }
+  }
+}
+
+export const socketService = new SocketService();
