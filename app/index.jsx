@@ -333,19 +333,118 @@ export default function FixGoLoginScreen() {
                 </TouchableOpacity>
               </View>
 
-              {/* Footer: Đăng ký (Figma: Chưa có tài khoản? Đăng ký ngay) */}
+              {/* Footer: Đăng ký (Bấm để hiển thị Modal chọn vai trò) */}
               <View style={styles.footerRow}>
                 <Text style={styles.footerText}>Chưa có tài khoản? </Text>
-                <Link href="/(auth)/register-customer" asChild>
-                  <TouchableOpacity activeOpacity={0.7}>
-                    <Text style={styles.footerLink}>Đăng ký ngay</Text>
-                  </TouchableOpacity>
-                </Link>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => setShowRegisterModal(true)}
+                >
+                  <Text style={styles.footerLink}>Đăng ký ngay</Text>
+                </TouchableOpacity>
               </View>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+
+      {/* ── Modal Popup: Chọn vai trò Đăng ký (Khách hàng vs Thợ) ─────────── */}
+      <Modal
+        visible={showRegisterModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowRegisterModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalBackdrop}
+          activeOpacity={1}
+          onPress={() => setShowRegisterModal(false)}
+        >
+          <TouchableOpacity
+            style={styles.modalCard}
+            activeOpacity={1}
+            onPress={(e) => {
+              if (Platform.OS === 'web') {
+                e?.stopPropagation?.();
+              }
+            }}
+          >
+            {/* Header Modal */}
+            <View style={styles.modalHeader}>
+              <View style={styles.modalHeaderTitleRow}>
+                <Ionicons name="person-add" size={20} color={COLORS.primary} style={{ marginRight: 8 }} />
+                <Text style={styles.modalTitle}>Chọn loại tài khoản</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.modalCloseBtn}
+                onPress={() => setShowRegisterModal(false)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="close" size={22} color={COLORS.gray} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.modalSubtitle}>
+              Vui lòng chọn vai trò bạn muốn tạo tài khoản trong hệ thống FIXGO:
+            </Text>
+
+            {/* Các tùy chọn */}
+            <View style={styles.modalOptions}>
+              {/* Option 1: Khách hàng */}
+              <TouchableOpacity
+                style={styles.modalOptionItemCustomer}
+                activeOpacity={0.8}
+                onPress={() => {
+                  setShowRegisterModal(false);
+                  router.push('/(auth)/register-customer');
+                }}
+              >
+                <View style={styles.modalOptionIconBoxCustomer}>
+                  <Ionicons name="person" size={22} color={COLORS.primary} />
+                </View>
+                <View style={styles.modalOptionContent}>
+                  <View style={styles.optionTitleRow}>
+                    <Text style={styles.modalOptionTitleCustomer}>Khách hàng</Text>
+                    <View style={styles.badgeCustomerPill}>
+                      <Text style={styles.badgeCustomerPillText}>Tìm thợ</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.modalOptionSub}>
+                    Dành cho cá nhân cần tìm và đặt thợ sửa chữa gia đình
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={COLORS.primary} />
+              </TouchableOpacity>
+
+              {/* Option 2: Thợ sửa chữa */}
+              <TouchableOpacity
+                style={styles.modalOptionItemWorker}
+                activeOpacity={0.8}
+                onPress={() => {
+                  setShowRegisterModal(false);
+                  router.push('/(auth)/register-worker');
+                }}
+              >
+                <View style={styles.modalOptionIconBoxWorker}>
+                  <Ionicons name="construct" size={22} color="#D97706" />
+                </View>
+                <View style={styles.modalOptionContent}>
+                  <View style={styles.optionTitleRow}>
+                    <Text style={styles.modalOptionTitleWorker}>Thợ sửa chữa</Text>
+                    <View style={styles.badgeWorkerPill}>
+                      <Text style={styles.badgeWorkerPillText}>Đối tác</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.modalOptionSub}>
+                    Dành cho thợ lành nghề muốn nhận việc và nâng cao thu nhập
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#D97706" />
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -541,50 +640,56 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
 
-  // ─── Modal Styles ──────────────────────────────────────────────────────────
+  // ─── Modal Popup Styles (Role Selection) ───────────────────────────────────
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   modalCard: {
     width: '100%',
-    maxWidth: 400,
+    maxWidth: 420,
     backgroundColor: COLORS.white,
-    borderRadius: 20,
+    borderRadius: 24,
     padding: 24,
     shadowColor: COLORS.black,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
+    elevation: 10,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
+  },
+  modalHeaderTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   modalTitle: {
     fontSize: 18,
     fontFamily: 'Inter_700Bold',
     fontWeight: '700',
-    color: '#1F2937',
+    color: '#0F172A',
   },
   modalCloseBtn: {
-    padding: 4,
+    padding: 6,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
   },
   modalSubtitle: {
     fontSize: 13,
     fontFamily: 'Inter_400Regular',
-    color: '#6B7280',
+    color: '#64748B',
     marginBottom: 20,
     lineHeight: 18,
   },
   modalOptions: {
-    gap: 12,
+    gap: 14,
   },
   modalOptionItemCustomer: {
     flexDirection: 'row',
@@ -592,32 +697,32 @@ const styles = StyleSheet.create({
     backgroundColor: '#EFF6FF',
     borderWidth: 1.5,
     borderColor: '#BFDBFE',
-    borderRadius: 16,
+    borderRadius: 18,
     padding: 14,
   },
   modalOptionItemWorker: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ECFDF5',
+    backgroundColor: '#FFFBEB',
     borderWidth: 1.5,
-    borderColor: '#A7F3D0',
-    borderRadius: 16,
+    borderColor: '#FDE68A',
+    borderRadius: 18,
     padding: 14,
   },
   modalOptionIconBoxCustomer: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     backgroundColor: '#DBEAFE',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   modalOptionIconBoxWorker: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    backgroundColor: '#D1FAE5',
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: '#FEF3C7',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -625,22 +730,52 @@ const styles = StyleSheet.create({
   modalOptionContent: {
     flex: 1,
   },
+  optionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 2,
+  },
   modalOptionTitleCustomer: {
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: 'Inter_700Bold',
     fontWeight: '700',
-    color: COLORS.primary,
+    color: '#1D4ED8',
   },
   modalOptionTitleWorker: {
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: 'Inter_700Bold',
     fontWeight: '700',
-    color: '#059669',
+    color: '#B45309',
+  },
+  badgeCustomerPill: {
+    backgroundColor: '#DBEAFE',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  badgeCustomerPillText: {
+    fontSize: 10,
+    fontFamily: 'Inter_700Bold',
+    fontWeight: '700',
+    color: '#1D4ED8',
+  },
+  badgeWorkerPill: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  badgeWorkerPillText: {
+    fontSize: 10,
+    fontFamily: 'Inter_700Bold',
+    fontWeight: '700',
+    color: '#B45309',
   },
   modalOptionSub: {
-    fontSize: 11,
+    fontSize: 11.5,
     fontFamily: 'Inter_400Regular',
-    color: '#6B7280',
-    marginTop: 2,
+    color: '#64748B',
+    lineHeight: 16,
   },
 });
