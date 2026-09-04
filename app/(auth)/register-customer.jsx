@@ -338,7 +338,13 @@ export default function RegisterCustomerScreen() {
                     color={COLORS.facebookBlue}
                     style={styles.socialIcon}
                   />
-                  <Text style={styles.socialFullText}>Đăng nhập bằng Facebook</Text>
+                  <Text
+                    style={styles.socialFullText}
+                    numberOfLines={1}
+                    allowFontScaling={false}
+                  >
+                    Đăng nhập bằng Facebook
+                  </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -352,7 +358,13 @@ export default function RegisterCustomerScreen() {
                     color={COLORS.googleRed}
                     style={styles.socialIcon}
                   />
-                  <Text style={styles.socialFullText}>Đăng nhập bằng Google</Text>
+                  <Text
+                    style={styles.socialFullText}
+                    numberOfLines={1}
+                    allowFontScaling={false}
+                  >
+                    Đăng nhập bằng Google
+                  </Text>
                 </TouchableOpacity>
 
                 {/* Footer: Đã có tài khoản? Đăng nhập ngay */}
@@ -895,18 +907,20 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.bgGray,
     borderRadius: 12,
     height: 50,
+    paddingHorizontal: 12,
     marginBottom: 14,
     borderWidth: 1,
     borderColor: COLORS.borderGray,
   },
   socialIcon: {
-    marginRight: 10,
+    marginRight: 8,
   },
   socialFullText: {
-    fontSize: 14,
+    fontSize: 13.5,
     fontFamily: 'Inter_500Medium',
-    fontWeight: '500',
     color: COLORS.textDark,
+    textAlign: 'center',
+    includeFontPadding: false,
   },
   footerRow: {
     flexDirection: 'row',
