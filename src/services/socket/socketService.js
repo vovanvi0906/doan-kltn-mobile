@@ -17,6 +17,7 @@ class SocketService {
     this.socket = null;
     this.url = getSocketUrl();
     this.isConnected = false;
+    this.joinedRooms = new Set();
   }
 
   connect() {
@@ -24,9 +25,10 @@ class SocketService {
       return this.socket;
     }
 
-    console.log(`📡 [Socket.IO] Khởi tạo kết nối tới Gateway: ${this.url}`);
+    const orderNamespaceUrl = `${this.url}/orders`;
+    console.log(`📡 [Socket.IO] Khởi tạo kết nối tới Gateway /orders: ${orderNamespaceUrl}`);
 
-    this.socket = io(this.url, {
+    this.socket = io(orderNamespaceUrl, {
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: 10,
@@ -35,20 +37,17 @@ class SocketService {
 
     this.socket.on('connect', async () => {
       this.isConnected = true;
-      console.log(`✅ [Socket.IO] Đã kết nối thành công! Socket ID: ${this.socket.id}`);
+      console.log(`✅ [Socket.IO /orders] Đã kết nối thành công! Socket ID: ${this.socket.id}`);
 
-      // Tự động gửi join_room khi kết nối
-      const user = await tokenStorage.getUser();
-      if (user) {
-        const role = String(user.role || 'CUSTOMER').toUpperCase();
-        const profileId = user.workerProfile?.id || user.customerProfile?.id || user.id;
-        this.joinRoom(role, profileId, user.id);
-      }
+      // Re-join any previously joined rooms after reconnection
+      this.joinedRooms.forEach((orderId) => {
+        this.joinOrderRoom(orderId);
+      });
     });
 
     this.socket.on('disconnect', (reason) => {
       this.isConnected = false;
-      console.log(`🔴 [Socket.IO] Đã ngắt kết nối: ${reason}`);
+      console.log(`🔴 [Socket.IO /orders] Đã ngắt kết nối: ${reason}`);
     });
 
     this.socket.on('connect_error', (error) => {
@@ -58,10 +57,35 @@ class SocketService {
     return this.socket;
   }
 
-  joinRoom(role, profileId, userId) {
+  /**
+   * Tham gia phòng theo dõi đơn hàng
+   * @param {string} orderId 
+   */
+  joinOrderRoom(orderId) {
+    if (!orderId) return;
+    this.joinedRooms.add(orderId);
+
+    if (!this.socket || !this.socket.connected) {
+      this.connect();
+    }
+
+    this.socket?.emit('order:join', { orderId }, (res) => {
+      console.log(`👁️ [Socket.IO] Đã join room đơn ${orderId}:`, res);
+    });
+  }
+
+  /**
+   * Rời phòng theo dõi đơn hàng để tránh leak listener
+   * @param {string} orderId 
+   */
+  leaveOrderRoom(orderId) {
+    if (!orderId) return;
+    this.joinedRooms.delete(orderId);
+
     if (this.socket && this.socket.connected) {
-      console.log(`🚪 [Socket.IO] Yêu cầu tham gia Room: role=${role}, profileId=${profileId}`);
-      this.socket.emit('join_room', { role, profileId, userId });
+      this.socket.emit('order:leave', { orderId }, (res) => {
+        console.log(`👋 [Socket.IO] Đã rời room đơn ${orderId}:`, res);
+      });
     }
   }
 
@@ -78,9 +102,9 @@ class SocketService {
     }
   }
 
-  emit(eventName, data) {
+  emit(eventName, data, callback) {
     if (this.socket && this.socket.connected) {
-      this.socket.emit(eventName, data);
+      this.socket.emit(eventName, data, callback);
     } else {
       console.warn(`⚠️ [Socket.IO] Chưa kết nối, không thể emit '${eventName}'`);
     }
@@ -91,6 +115,7 @@ class SocketService {
       this.socket.disconnect();
       this.socket = null;
       this.isConnected = false;
+      this.joinedRooms.clear();
     }
   }
 }

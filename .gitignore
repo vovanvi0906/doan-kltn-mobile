@@ -9,8 +9,5 @@ npm-debug.*
 *.mobileprovision
 *.orig.*
 web-build/
-.env
-.env.local
-.env.*.local
 .DS_Store
 *.log
